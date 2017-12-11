@@ -1,2 +1,3 @@
 # rullband
-https://processing.org/reference/createShape_.html
+Using this dependency (Sketch > Import Library > Add Library)
+https://github.com/fjenett/Guido
