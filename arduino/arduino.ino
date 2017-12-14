@@ -1,21 +1,11 @@
 /*
-this program taken from arduino Example .
-  modified by By Mohannad Rawashdeh
-  http://www.genotronex.com
-https://www.instructables.com/
-
-  This code used to control the digital potentiometer
-  MCP41100 connected to  arduino Board
   CS >>> D10
   SCLK >> D13
   DI  >>> D11
-  PA0 TO VCC
-  PBO TO GND
-  PW0 TO led with resistor 100ohm .
 */
 #include <SPI.h>
-byte address = 0x11;
-int CS= 10;
+byte address = 0x11; // Select the first potentiometer, and write data to it
+int CS= 10;          // Chip select
 int i=0;
 
 int forward = A0;
@@ -23,40 +13,47 @@ int backward = A3;
 
 void setup()
 {
-  pinMode (CS, OUTPUT);
-  SPI.begin();
-  // adjust high and low resistance of potentiometer
-  // adjust Highest Resistance .
+  pinMode(CS, OUTPUT);
   pinMode(forward, OUTPUT);
   pinMode(backward, OUTPUT);
+  SPI.begin();
+
+  // Stop the band at startup
   stopping();
-  delay(10000);
+  // Wait 10s before start
+  delay(10000); 
 }
 
+// Set control signals to backward direction
 void goBackward(){
     digitalWrite(forward, LOW);
     digitalWrite(backward,HIGH);
 }
 
+// Set control signals to forward direction
 void goForward(){
     digitalWrite(backward, LOW);
     digitalWrite(forward,HIGH);
 }
 
+// Set control signals to no motion
 void stopping(){
     digitalWrite(backward, LOW);
     digitalWrite(forward,  LOW);
 }
+
 void loop()
 {
     goForward();
 
+    // Ramp up speed forward direction
     for (i = 0; i <= 255; i++)
     {
       digitalPotWrite(i);
       delay(50);
     }
     delay(1000);
+    // Ramp down speed forward direction
     for (i = 255; i >= 0; i--)
     {
       digitalPotWrite(i);
@@ -67,12 +64,14 @@ void loop()
 
     goBackward();
     
+    // Ramp up speed backward direction
     for (i = 0; i <= 255; i++)
     {
       digitalPotWrite(i);
       delay(50);
     }
     delay(1000);
+    // Ramp down speed backward direction
     for (i = 255; i >= 0; i--)
     {
       digitalPotWrite(i);
@@ -81,6 +80,8 @@ void loop()
     delay(3000);
 }
 
+
+// Write data to the digital potentiometer
 int digitalPotWrite(int value)
 {
   digitalWrite(CS, LOW);
