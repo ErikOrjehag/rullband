@@ -1,5 +1,6 @@
 import java.util.Collections;
 import java.util.LinkedList;
+import java.nio.ByteBuffer;
 
 public class Timeline
 {
@@ -136,7 +137,7 @@ public class Timeline
     pushMatrix();
     translate(-panOffset, 0);
       
-    fill(100);
+    fill(36, 157, 244);
     
     for (int i = 0; i < handles.size() - 1; i++) {
       Handle current = handles.get(i);
@@ -161,10 +162,11 @@ public class Timeline
       
     for (int i = 0; i < handles.size(); i++) {
       Handle handle = handles.get(i);
-      fill(255/handles.size() * i);
+      //fill(255/handles.size() * i);
+      fill(255);
       handle.draw();
       
-      fill(50);
+      fill(0);
       textFont(font);
       String text = pxToPrettyTime(handle.x);
       float textW = textWidth(text);
@@ -199,7 +201,13 @@ public class Timeline
   {
     // Between [-1, 1]
     float middleY = y + height / 2;
-    return (px - middleY) / height;
+    return ((px - middleY) / height) * -2;
+  }
+  
+  float decimalValueToPx(float decimal)
+  {
+    float middleY = y + height / 2;
+    return middleY + decimal * height / -2;
   }
   
   String pxToPrettyTime (float px)
@@ -215,9 +223,9 @@ public class Timeline
   {
     /*
       Every keyframe is 4 bytes
-      t0 t1 t2 d0
+      t0 t1 t2 v0
       This gives us a max time of ((2^(8*3)) / 60) / 60 = 4660 minutes
-      Data resolution will be 2^8-1 = 255 steps. The first bit in the data byte decides direction.
+      Data resolution will be 2^8-1 = 255 steps. The first bit in the value byte decides direction.
       The EEPROM is 1KB and can hold 1024/4 = 256 keyframes.
     */
     
@@ -225,20 +233,23 @@ public class Timeline
     
     byte[] data = new byte[handles.size() * packetSize];
     
-    for (int i = 0; i < handles.size(); i += packetSize)
+    for (int i = 0; i < handles.size(); i ++)
     {
       Handle handle = handles.get(i);
+      
+      // Create seconds bytes.
       int seconds = round(pxToSeconds(handle.x));
-      byte t0 = (byte)seconds;
-      seconds >>= 8;
-      byte t1 = (byte)seconds;
-      seconds >>= 8;
-      byte t2 = (byte)seconds;
-      byte d0 = (byte)((pxToDecimalValue(handle.y) / 2) * 256);
-      data[i] = t0;
-      data[i + 1] = t1;
-      data[i + 2] = t2;
-      data[i + 3] = d0;
+      byte[] t = ByteBuffer.allocate(4).putInt(seconds).array();
+      
+      // Create value byte.
+      float decimal = pxToDecimalValue(handle.y);
+      byte v0 = (byte)((decimal / 2) * 255);
+      
+      // Create package.
+      data[packetSize * i] = t[3];     // LSB
+      data[packetSize * i + 1] = t[2];
+      data[packetSize * i + 2] = t[1]; // MSB
+      data[packetSize * i + 3] = v0;
     }
     
     return data;
@@ -246,7 +257,25 @@ public class Timeline
   
   void fromByteArray(byte[] data)
   {
+    reset();
     
+    int packetSize = 4;
+    
+    for (int i = 0; i < data.length; i += packetSize) {
+      
+      // Decode seconds.
+      byte[] bytes = { 0, data[i+2], data[i+1], data[i] };
+      int seconds = ByteBuffer.wrap(bytes).getInt();
+      
+      // Decode value.
+      float value = (data[i + 3] * 2.) / 255.;
+      
+      // Convert to pixels and create handle.
+      float hx = secondsToPx(seconds);
+      float hy = decimalValueToPx(value);
+      Handle handle = new Handle(hx, hy);
+      handles.add(handle);
+    }
   }
 }
 

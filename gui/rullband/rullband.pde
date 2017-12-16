@@ -14,15 +14,15 @@ void setup ()
     
   Interactive.make( this );
   
-  int pad = 10;
   int buttonW = 100;
   int buttonH = 30;
     
-  timeline = new Timeline(0, pad * 2 + buttonH, width - pad * 2, height - buttonH - pad * 3);
-  Button newBtn = new Button(0, pad, buttonW, buttonH, "New");
-  Button openBtn = new Button(buttonW, pad, buttonW, buttonH, "Open");
-  Button saveBtn = new Button(buttonW * 2, pad, buttonW, buttonH, "Save");
-  Button uploadBtn = new Button(buttonW * 3, pad, buttonW, buttonH, "Upload");
+  timeline = new Timeline(0, buttonH, width, height - buttonH);
+  
+  Button newBtn =    new Button(0,           0, buttonW, buttonH, "New");
+  Button openBtn =   new Button(buttonW,     0, buttonW, buttonH, "Open");
+  Button saveBtn =   new Button(buttonW * 2, 0, buttonW, buttonH, "Save");
+  Button uploadBtn = new Button(buttonW * 3, 0, buttonW, buttonH, "Upload");
   
   Interactive.on(newBtn, "click", this, "newProject");
   Interactive.on(openBtn, "click", this, "openFile");
@@ -81,10 +81,59 @@ void openFileCb (File selection)
 
 void uploadProject ()
 {
-  // TODO: This is completely untested and maybe needs a way to select the correct serial device.
-  Serial port;
-  printArray(Serial.list());
-  port = new Serial(this, Serial.list()[0], 9600);
+  //printArray(Serial.list());
+  
+  String[] options = filter(Serial.list(), "USB");
+  String device;
+ 
+  if (options.length == 0)
+  {
+    JOptionPane.showMessageDialog(
+      (Component) null,
+      "No serial device connected."
+    );
+    return;
+  }
+  else if (options.length == 1)
+  {
+    device = options[0];
+  }
+  else
+  {
+    device = (String)JOptionPane.showInputDialog(
+      (Component) null,
+      "Select serial device",
+      "Select Dialog",
+      JOptionPane.PLAIN_MESSAGE,
+      null,
+      options,
+      options[0]
+    );
+  
+    //If a string was returned, say so.
+    if ((device == null) || (device.length() == 0)) {
+      return;
+    }
+  }
+  
+  Serial port = new Serial(this, device, 9600);
   byte[] data = timeline.toByteArray();
   port.write(data);
+  port.stop();
+  
+  JOptionPane.showMessageDialog(
+    (Component) null,
+    "Upload complete."
+  );
+}
+
+String[] filter(String[] array, String thing)
+{
+  ArrayList<String> result = new ArrayList<String>();
+  for (String s : array) {
+    if (s.contains(thing)) {
+      result.add(s);
+    }
+  }
+  return result.toArray(new String[result.size()]);
 }
