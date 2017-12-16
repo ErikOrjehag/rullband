@@ -110,7 +110,6 @@ void uploadProject ()
       options[0]
     );
   
-    //If a string was returned, say so.
     if ((device == null) || (device.length() == 0)) {
       return;
     }
