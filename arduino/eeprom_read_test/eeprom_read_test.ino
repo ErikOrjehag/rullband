@@ -8,7 +8,7 @@ struct handle {
   unsigned long getTime() {
     return ((unsigned long)t2 << 16) | ((unsigned long)t1 << 8) | (t0);
   }
-  int getHeight() {
+  char getHeight() {
     return d0;
   }
 };
@@ -24,7 +24,7 @@ bool done = false;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  
+  /*
   handle data[] = {{0,0,0 ,0},
                    {10,0,0 ,0},
                    {15,0,0 ,100},
@@ -36,12 +36,15 @@ void setup() {
                    {120,0,0,0},
                    {150,0,0,0}};
   Serial.println("Initialize eeprom");
-  for(int i = 0; i < 10; i++){
-    //printHandle(data[i]);
-    EEPROM.put(i*sizeof(handle), data[i]);
+  byte var;
+  for(int i = 0; i < 13; i++){
+    printHandle(EEPROM.get(i*sizeof(handle)+1, current_handle));
   }
-  EEPROM.get(0, current_handle);
-  EEPROM.get(sizeof(handle), next_handle);
+  for(int i = 0; i < 13*sizeof(handle); i++){
+    Serial.println(EEPROM.get(1+i, var));
+  }*/
+  EEPROM.get(1, current_handle);
+  EEPROM.get(1+sizeof(handle), next_handle);
 }
 
 
@@ -56,12 +59,12 @@ void loop() {
   while (current_time > next_handle.getTime()) {
     Serial.println("Update handle to next");
     handle_index+=sizeof(handle);
-    if(handle_index > 9*sizeof(handle)){
+    if(handle_index > 12*sizeof(handle)){
       done = true;
       return;
     }
     current_handle = next_handle;
-    EEPROM.get(handle_index + sizeof(handle), next_handle);
+    EEPROM.get(1+handle_index + sizeof(handle), next_handle);
     return;
   }
   //Serial.print("Current handle: ");
@@ -73,7 +76,7 @@ void loop() {
 void printHandle(handle h){
 
   Serial.print("Height: ");
-  Serial.print(h.getHeight());
+  Serial.print((int)h.getHeight());
   Serial.print("\t time: ");
   Serial.print(h.getTime());
   Serial.print("\t @ ");
