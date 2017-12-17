@@ -116,9 +116,7 @@ void uploadProject ()
   }
   
   Serial port = new Serial(this, device, 9600);
-
   byte[] data = timeline.toByteArray();
-  port.write(timeline.handles.size());
   port.write(data);
   port.stop();
   
