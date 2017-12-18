@@ -12,6 +12,7 @@ public class Timeline
   boolean isPanning = false;
   float prevPanMouseX = 0; // Used to calculate dx when panning
   float panOffset = 0; // Panning offset in px
+  int MAX_NUMBER_OF_HANDLES = 250;
     
   Timeline(float xx, float yy, float w, float h)
   {
@@ -88,9 +89,16 @@ public class Timeline
     boolean shouldCreateNewHandle = leftClick && activeHandle == null;
     
     if (shouldCreateNewHandle) {
-      activeHandle = new Handle(tx, my);
-      handles.add(activeHandle);
-      Collections.sort(handles);
+      if (handles.size() < MAX_NUMBER_OF_HANDLES) {
+        activeHandle = new Handle(tx, my);
+        handles.add(activeHandle);
+        Collections.sort(handles);
+      } else {
+        JOptionPane.showMessageDialog(
+          (Component) null,
+          "Cannot add more than " + MAX_NUMBER_OF_HANDLES + " points in timeline!"
+        );
+      }
     }
   }
     
