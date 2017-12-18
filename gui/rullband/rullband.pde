@@ -4,6 +4,7 @@ import de.bezier.guido.*;
 import java.awt.Component;
 import javax.swing.JOptionPane;
 
+Serial port = null;
 Timeline timeline;
 
 void setup ()
@@ -28,11 +29,53 @@ void setup ()
   Interactive.on(openBtn, "click", this, "openFile");
   Interactive.on(saveBtn, "click", this, "saveFile");
   Interactive.on(uploadBtn, "click", this, "uploadProject");
+  
+  initSerial();
+}
+
+void initSerial()
+{
+  //printArray(Serial.list());
+  
+  String[] ports = {"USB", "COM"};
+  String[] options = filter(Serial.list(), ports);
+  String device;
+  
+  if (options.length == 0)
+  {
+    JOptionPane.showMessageDialog(
+      (Component) null,
+      "No serial device connected."
+    );
+    return;
+  }
+  else
+  {
+    device = (String)JOptionPane.showInputDialog(
+      (Component) null,
+      "Select serial device",
+      "Select Dialog",
+      JOptionPane.PLAIN_MESSAGE,
+      null,
+      options,
+      options[0]
+    );
+  
+    if ((device == null) || (device.length() == 0)) {
+      return;
+    }
+  }
+  
+  port = new Serial(this, device, 9600);
 }
 
 void draw ()
 {
     background( 0 );
+    
+    if (port != null && port.available() > 0) {
+      print(port.readString());
+    }
 }
 
 void newProject ()
@@ -80,13 +123,7 @@ void openFileCb (File selection)
 }
 
 void uploadProject ()
-{
-  //printArray(Serial.list());
-  
-  String[] ports = {"USB", "COM"};
-  String[] options = filter(Serial.list(), ports);
-  String device;
-  
+{ 
   if (timeline.handles.size() < 2) {
     JOptionPane.showMessageDialog(
       (Component) null,
@@ -94,42 +131,10 @@ void uploadProject ()
     );
     return;
   }
- 
-  if (options.length == 0)
-  {
-    JOptionPane.showMessageDialog(
-      (Component) null,
-      "No serial device connected."
-    );
-    return;
-  }
-  else if (options.length == 1)
-  {
-    device = options[0];
-  }
-  else
-  {
-    device = (String)JOptionPane.showInputDialog(
-      (Component) null,
-      "Select serial device",
-      "Select Dialog",
-      JOptionPane.PLAIN_MESSAGE,
-      null,
-      options,
-      options[0]
-    );
   
-    if ((device == null) || (device.length() == 0)) {
-      return;
-    }
-  }
-  
-  Serial port = new Serial(this, device, 9600);
-
   byte[] data = timeline.toByteArray();
   port.write(timeline.handles.size());
   port.write(data);
-  port.stop();
   
   JOptionPane.showMessageDialog(
     (Component) null,

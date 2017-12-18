@@ -19,6 +19,8 @@ public class Timeline
     x = xx; y = yy; width = w; height = h;
     
     handles = new ArrayList<Handle>();
+    float middleY = y + height / 2;
+    handles.add(new Handle(x, middleY));
     
     font = createFont("Arial", 11, true);
     
@@ -74,7 +76,8 @@ public class Timeline
       return;
     }
     
-    for (int i = 0; i < handles.size(); i++) {
+    // Start at 1 because we cannot affect the first handle.
+    for (int i = 1; i < handles.size(); i++) {
       Handle handle = handles.get(i);
       if (handle.isInside(tx, my)) {
         if (leftClick) {
