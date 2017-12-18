@@ -83,8 +83,17 @@ void uploadProject ()
 {
   //printArray(Serial.list());
   
-  String[] options = filter(Serial.list(), "USB");
+  String[] ports = {"USB", "COM"};
+  String[] options = filter(Serial.list(), ports);
   String device;
+  
+  if (timeline.handles.size() < 2) {
+    JOptionPane.showMessageDialog(
+      (Component) null,
+      "The timeline needs at least two points!"
+    );
+    return;
+  }
  
   if (options.length == 0)
   {
@@ -128,13 +137,22 @@ void uploadProject ()
   );
 }
 
-String[] filter(String[] array, String thing)
+String[] filter(String[] array, String[] things)
 {
   ArrayList<String> result = new ArrayList<String>();
   for (String s : array) {
-    if (s.contains(thing)) {
+    if (containsAny(s, things)) {
       result.add(s);
     }
   }
   return result.toArray(new String[result.size()]);
+}
+
+boolean containsAny(String s, String[] things) {
+  for (String thing : things) {
+    if (s.contains(thing)) {
+      return true;
+    }
+  }
+  return false;
 }
