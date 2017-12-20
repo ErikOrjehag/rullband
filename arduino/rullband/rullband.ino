@@ -32,7 +32,7 @@ int backward = A3;
 byte address = 0x11; 
 
 // Variables for receiving new programs
-unsigned long lastRecieved;
+unsigned long lastRecieved = 0;
 const unsigned long TIME_THRESHOLD = 5000;
 byte value = 0;
 int index = 0;
@@ -73,7 +73,19 @@ void loop()
 
   // If we have a new program sent to us. 
   if (Serial.available() > 0) {
-    uploadInProgress = true;
+
+    if (!uploadInProgress) {
+      // Serial handshake.
+      Serial.println("Serial handshake");
+      Serial.flush();
+      while (Serial.available()) {
+        Serial.read();
+      }
+      uploadInProgress = true;
+      return;
+    }
+
+    
     // If the program is a new one (instead of continuation of a ongoing program download)
     if(millis() - lastRecieved > TIME_THRESHOLD){
       Serial.println("New program detected");
@@ -102,6 +114,7 @@ void loop()
   // New program upload done
   if(uploadInProgress && millis() - lastRecieved > TIME_THRESHOLD){
     Serial.println("Upload of new program done");
+    Serial.flush();
     uploadInProgress = false;
     resetFunc();  //call reset
   }
@@ -111,10 +124,9 @@ void loop()
   }
   
   if(done){
-    Serial.println("DONE!");
-    delay(4000);
     return;
   }
+  
   current_time = ((float)millis()/1000.0);
 
   while (current_time > next_handle.getTime()) {
@@ -122,6 +134,7 @@ void loop()
     handle_index += sizeof(handle);
     if(handle_index > (lengthOfProgram-2) * sizeof(handle)){
       done = true;
+      Serial.println("DONE!");
       return;
     }
     current_handle = next_handle;

@@ -6,6 +6,7 @@ import javax.swing.JOptionPane;
 
 Serial port = null;
 Timeline timeline;
+boolean uploading = false;
 
 void setup ()
 {
@@ -29,51 +30,13 @@ void setup ()
   Interactive.on(openBtn, "click", this, "openFile");
   Interactive.on(saveBtn, "click", this, "saveFile");
   Interactive.on(uploadBtn, "click", this, "uploadProject");
-  
-  initSerial();
-}
-
-void initSerial()
-{
-  //printArray(Serial.list());
-  
-  String[] ports = {"USB", "COM"};
-  String[] options = filter(Serial.list(), ports);
-  String device;
-  
-  if (options.length == 0)
-  {
-    JOptionPane.showMessageDialog(
-      (Component) null,
-      "No serial device connected."
-    );
-    return;
-  }
-  else
-  {
-    device = (String)JOptionPane.showInputDialog(
-      (Component) null,
-      "Select serial device",
-      "Select Dialog",
-      JOptionPane.PLAIN_MESSAGE,
-      null,
-      options,
-      options[0]
-    );
-  
-    if ((device == null) || (device.length() == 0)) {
-      return;
-    }
-  }
-  
-  port = new Serial(this, device, 9600);
 }
 
 void draw ()
 {
     background( 0 );
     
-    if (port != null && port.available() > 0) {
+    if (!uploading && port != null && port.available() > 0) {
       print(port.readString());
     }
 }
@@ -132,6 +95,54 @@ void uploadProject ()
     return;
   }
   
+  //printArray(Serial.list());
+  
+  String[] ports = {"USB", "COM"};
+  String[] options = filter(Serial.list(), ports);
+  String device;
+  
+  if (options.length == 0)
+  {
+    JOptionPane.showMessageDialog(
+      (Component) null,
+      "No serial device connected."
+    );
+    return;
+  }
+  else
+  {
+    device = (String)JOptionPane.showInputDialog(
+      (Component) null,
+      "Select serial device",
+      "Select Dialog",
+      JOptionPane.PLAIN_MESSAGE,
+      null,
+      options,
+      options[0]
+    );
+  
+    if ((device == null) || (device.length() == 0)) {
+      return;
+    }
+  }
+  
+  if (port != null) {
+    port.stop();
+  }
+  
+  uploading = true;
+  
+  port = new Serial(this, device, 9600);
+  
+  while (port.available() <= 0) {
+    port.write('A');
+    delay(1000);
+  }
+  
+  while (port.available() > 0) {
+    println(port.readString());
+  }
+  
   byte[] data = timeline.toByteArray();
   port.write(timeline.handles.size());
   port.write(data);
@@ -140,6 +151,8 @@ void uploadProject ()
     (Component) null,
     "Upload complete."
   );
+  
+  uploading = false;
 }
 
 String[] filter(String[] array, String[] things)
