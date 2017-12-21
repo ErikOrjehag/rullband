@@ -134,11 +134,13 @@ void uploadProject ()
   while (port.available() <= 0) delay(10);
   delay(500);
   
+  int wait = 30;
   byte[] data = timeline.toByteArray();
   port.write(timeline.handles.size());
+  delay(wait);
   for (byte b : data) {
     port.write(b);
-    delay(30);
+    delay(wait);
   }
   
   JOptionPane.showMessageDialog(
