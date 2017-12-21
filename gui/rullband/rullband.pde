@@ -130,29 +130,43 @@ void uploadProject ()
     port.stop();
   }
   
-  uploading = true;
-  
   port = new Serial(this, device, 9600);
   
-  while (port.available() <= 0) {
-    port.write('A');
-    delay(1000);
+  port.clear();
+  while (true) {
+    if (port.available() > 0 && port.read() == 'A') {
+      port.clear();
+      println("Ok!");
+      port.write('B');
+      break;
+    } else {
+      println("Connecting...");
+      port.write('A');
+      delay(10);
+    }
   }
   
-  while (port.available() > 0) {
-    println(port.readString());
-  }
+  
+  println(timeline.handles.size());
+  
+  delay(1000);
+  port.clear();
   
   byte[] data = timeline.toByteArray();
   port.write(timeline.handles.size());
   port.write(data);
+  for (byte b : data) {
+    port.write(b);
+    while (port.available() > 0) {
+      print(port.readString());
+      delay(50);
+    }
+  }
   
   JOptionPane.showMessageDialog(
     (Component) null,
     "Upload complete."
   );
-  
-  uploading = false;
 }
 
 String[] filter(String[] array, String[] things)
