@@ -6,7 +6,6 @@ import javax.swing.JOptionPane;
 
 Serial port = null;
 Timeline timeline;
-boolean uploading = false;
 
 void setup ()
 {
@@ -36,7 +35,7 @@ void draw ()
 {
     background( 0 );
     
-    if (!uploading && port != null && port.available() > 0) {
+    if (port != null && port.available() > 0) {
       print(port.readString());
     }
 }
@@ -95,8 +94,6 @@ void uploadProject ()
     return;
   }
   
-  //printArray(Serial.list());
-  
   String[] ports = {"USB", "COM"};
   String[] options = filter(Serial.list(), ports);
   String device;
@@ -125,42 +122,23 @@ void uploadProject ()
       return;
     }
   }
-  
+ 
   if (port != null) {
     port.stop();
   }
   
+  // The Arduino will now restart...
   port = new Serial(this, device, 9600);
   
-  port.clear();
-  while (true) {
-    if (port.available() > 0 && port.read() == 'A') {
-      port.clear();
-      println("Ok!");
-      port.write('B');
-      break;
-    } else {
-      println("Connecting...");
-      port.write('A');
-      delay(10);
-    }
-  }
-  
-  
-  println(timeline.handles.size());
-  
-  delay(1000);
-  port.clear();
+  // Wait until "Start execution of program", in the Arduino setup.
+  while (port.available() <= 0) delay(10);
+  delay(500);
   
   byte[] data = timeline.toByteArray();
   port.write(timeline.handles.size());
-  port.write(data);
   for (byte b : data) {
     port.write(b);
-    while (port.available() > 0) {
-      print(port.readString());
-      delay(50);
-    }
+    delay(30);
   }
   
   JOptionPane.showMessageDialog(

@@ -36,8 +36,6 @@ unsigned long lastRecieved = 0;
 const unsigned long TIME_THRESHOLD = 1000;
 byte value = 0;
 int index = 0;
-bool uploadInProgress = false;
-bool handshakeComplete = false;
 
 
 // Variables for execution of program
@@ -69,87 +67,46 @@ void setup()
   Serial.println("Start execution of program"); 
 }
 
-void clearSerial() {
-  unsigned long now = millis();
-  while (millis() - now < 1000) {
-    if (Serial.available() > 0) {
-      Serial.read();
-    }
-  }  
-}
-
 void loop()
 {
-  handshakeComplete = false;
   index = 0;
 
   // If we have a new program sent to us. 
   if (Serial.available() > 0) {
 
-    // Enter upload state
-    while (true) {
+    // Receive program.
+    lastRecieved = millis();
+    while (millis() - lastRecieved < TIME_THRESHOLD) {
 
-      // First do handshake.
-      if (!handshakeComplete) {
-        if (Serial.read() == 'A') {
-          
-          clearSerial();
-          
-          while (true) {
-            if (Serial.available() > 0 && Serial.read() == 'B') {
-  
-              // Handshake complete, lets upload program!
-              handshakeComplete = true;
-              Serial.println("New program detected");
-              index = 0;
-              break;
-            
-            } else {
-              Serial.print('A');
-              Serial.flush();
-              delay(1000);
-            }
-          }
-          
+      if (Serial.available()) {
+        if (index >= EEPROM.length()){
+          Serial.println("Reached end of eeprom memory!");
+          index = 0;
         }
-      }
-      // After handshake do upload.
-      else
-      {
-
-        if (Serial.available()) {
-          if (index >= EEPROM.length()){
-            Serial.println("Reached end of eeprom memory!");
-            index = 0;
-          }
-          
-          // read the incoming byte:
-          value = Serial.read();
         
-          // say what you got:
-          Serial.print("I received: ");
-          Serial.println(value, DEC);
+        // read the incoming byte:
+        value = Serial.read();
       
-          // Save value to EEPROM memory
-          EEPROM[index] = value;
-      
-          // Increase index to next iteration 
-          index++;
-          lastRecieved = millis();
-          
-        } else {
-          // New program upload done
-          if (millis() - lastRecieved > TIME_THRESHOLD) {
-            String msg = "Upload of new program done (";
-            msg.concat(index - 1);
-            msg.concat(" bytes)");
-            Serial.println(msg);
-            Serial.flush();
-            resetFunc();  //call reset
-          }
-        }
-      } 
+        // say what you got:
+        Serial.print("I received: ");
+        Serial.println(value, DEC);
+    
+        // Save value to EEPROM memory
+        EEPROM[index] = value;
+    
+        // Increase index to next iteration 
+        index++;
+        lastRecieved = millis();
+      }
     }
+
+    // New program upload done
+    String msg = "Upload of new program done (";
+    msg.concat(index - 1);
+    msg.concat(" bytes)");
+    Serial.println(msg);
+    Serial.flush();
+    resetFunc();  //call reset
   }
   
   if (done) {
@@ -176,8 +133,6 @@ void loop()
   setSpeed(speed);
   delay(400);
 }
-
-
 
 char interpolate(struct handle p0, struct handle p1, float t) {
   signed long x0 = p0.getTime();

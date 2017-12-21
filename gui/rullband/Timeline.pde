@@ -12,18 +12,20 @@ public class Timeline
   boolean isPanning = false;
   float prevPanMouseX = 0; // Used to calculate dx when panning
   float panOffset = 0; // Panning offset in px
-  int MAX_NUMBER_OF_HANDLES = 16;
-    
+  int MAX_NUMBER_OF_HANDLES = 250;
+  
   Timeline(float xx, float yy, float w, float h)
   {
     x = xx; y = yy; width = w; height = h;
     
     handles = new ArrayList<Handle>();
-    float middleY = y + height / 2;
+    reset();
     
+    /*handles.clear();
+    float middleY = y + height / 2;
     for (int i = 0; i < MAX_NUMBER_OF_HANDLES; i++) {
       handles.add(new Handle(x + i * 5 * pxPerS, middleY - 20));
-    }
+    }*/
     
     font = createFont("Arial", 11, true);
     
@@ -33,6 +35,8 @@ public class Timeline
   void reset()
   {
     handles.clear();
+    float middleY = y + height / 2;
+    handles.add(new Handle(x, middleY));
     panOffset = 0;
   }
   
